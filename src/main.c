@@ -39,7 +39,7 @@ const char* get_item_name(ItemType item) {
     }
 }
 
-void inventory(const ItemType inv[], int size) {
+void print_inventory(const ItemType inv[], int size) {
     for (int i = 0; i < size; i++) {
         printf("Слот %d: [%d] (%s)\n", i, (int)inv[i], get_item_name(inv[i])); 
     } 
@@ -93,6 +93,12 @@ int main(void) {
                 hours, current_day, current_hour);
             break;
         }
+
+        case 3:
+            print_inventory(inventory, INVENTORY_SIZE);
+            break;
+
+        case 4:
 
         }
 
