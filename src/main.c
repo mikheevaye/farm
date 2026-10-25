@@ -1,14 +1,22 @@
 #include <stdio.h>
+#include <locale.h>
 
-#define INVENTORY_SIZE     10
 #define HOURS_IN_DAY       24
+#define INVENTORY_SIZE     10
+#define MAX_ITEMS          10
 #define INITIAL_DAY        1
 #define INITIAL_HOUR       8
 
-void not_fool(void) {
+int fool_check(int scanf_result) {
     int ch;
     while ((ch = getchar()) != '\n' && ch != EOF);
+    if (scanf_result != 1) {
+        printf("Ошибка ввода. Введите целое число.\n");
+        return 0;
+    }
+    return 1;
 }
+
 
 typedef enum {
     ITEM_EMPTY,
@@ -47,15 +55,15 @@ void print_inventory(const ItemType inv[], int size) {
 }
 
 int main(void) {
-    setlocale(0, ""); // чтоб умная консоль выводила человеческий русский
+    setlocale(LC_ALL, ""); // чтоб умная консоль выводила человеческий русский
     int current_day = 1;
     int current_hour = 8;
-    ItemType inventory[INVENTORY_SIZE] {
+    ItemType inventory[INVENTORY_SIZE]{
         ITEM_EMPTY, ITEM_WOOD, ITEM_STONE, ITEM_SEEDS, ITEM_IRON,
         ITEM_WATER, ITEM_TORCH, ITEM_GOLD, ITEM_ROPE, ITEM_SCYTHE
-    }
+    };
     int choice = -1;
-    
+
     while (choice != 0) {
         printf("\n============= Меню =============\n");
         printf("[0] Выход\n");
@@ -68,9 +76,9 @@ int main(void) {
         printf("==================================\n");
         printf("Что хотите сделать?: ");
 
-        choice = read_int("Выберите пункт меню: ", 0, 6);
-
-        while ((c = getchar()) != '\n' && c != EOF) {}
+        if (!fool_check(scanf("%d", &choice))) {
+            continue;
+        }
 
         switch (choice) {
         case 0:
@@ -85,12 +93,16 @@ int main(void) {
         case 2: {
             int hours;
             printf("Сколько часов хотите поработать? ");
+            if (!fool_check(scanf("%d", &hours))) break;
+            if (hours < 0) {
+                printf("Вы не можете порботать отрицательное количество часов.\n");
+                break;
+            }
             current_hour += hours;
             current_day += current_hour / HOURS_IN_DAY;
             current_hour = current_hour % HOURS_IN_DAY;
 
-            printf("Прошло %d ч. Текущее время: День %d, %02d:00\n",
-                hours, current_day, current_hour);
+            printf("Прошло %d ч. Текущее время: День %d, %02d:00\n", hours, current_day, current_hour);
             break;
         }
 
@@ -98,8 +110,40 @@ int main(void) {
             print_inventory(inventory, INVENTORY_SIZE);
             break;
 
-        case 4:
+        case 4: {
+            int slot, id;
+            printf("Введите индекс слота (0-9): ");
+            if (!fool_check(scanf("%d", &slot))) break;
+            if (slot < 0 || slot >= INVENTORY_SIZE) {
+                printf("Индекс должен быть от 0 до 9.\n");
+                break;
+            }
 
+            printf("Введите ID предмета (0-9): ");
+            if (!fool_check(scanf("%d", &id))) break;
+            if (id < 0 || id >= MAX_ITEMS) {
+                printf("ID должен быть от 0 до 9.\n");
+                break;
+            }
+
+            inventory[slot] = (ItemType)id;
+            printf("Предмет '%s' помещён в слот %d.\n", get_item_name((ItemType)id), slot);
+            break;
         }
 
+        case 5: {
+            int slot;
+            printf("Введите индекс слота, из которого хотите удалить предмет (0-9): ");
+            if (!fool_check(scanf("%d", &slot))) break;
+            if (slot < 0 || slot >= INVENTORY_SIZE) {
+                printf("Индекс должен быть от 0 до 9.\n");
+                break;
+            }
+            inventory[slot] = ITEM_EMPTY;
+            printf("Слот %d очищен.\n", slot);
+            break;
+        }
+    }
+
+    return 0;
 }
