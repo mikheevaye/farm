@@ -4,8 +4,6 @@
 #define HOURS_IN_DAY       24
 #define INVENTORY_SIZE     10
 #define MAX_ITEMS          10
-#define INITIAL_DAY        1
-#define INITIAL_HOUR       8
 
 int fool_check(int scanf_result) {
     int ch;
@@ -141,6 +139,32 @@ int main(void) {
             }
             inventory[slot] = ITEM_EMPTY;
             printf("Слот %d очищен.\n", slot);
+            break;
+        }
+
+        case 6: {
+            int id, count = 0;
+            printf("Введите ID предмета (1-9) для очистки: ");
+            if (!fool_check(scanf("%d", &id))) break;          
+            if (id < 1 || id >= MAX_ITEMS) {
+                printf("ID должен быть от 1 до 9.\n");
+                break;
+            }
+
+            for (int i = 0; i < INVENTORY_SIZE; i++) {
+                if (inventory[i] != ITEM_EMPTY && (int)inventory[i] == id) {
+                    inventory[i] = ITEM_EMPTY;
+                    count++;
+                }
+            }
+
+            if (count == 0) {
+                printf("Предметов с ID %d в инвентаре не найдено, очистка не произведена.\n", id);
+            }
+            else {
+                printf("Очищено слотов: %d (предмет ID %d -> '%s').\n",
+                    count, id, get_item_name((ItemType)id));
+            }
             break;
         }
     }
