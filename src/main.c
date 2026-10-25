@@ -41,8 +41,9 @@ const char* get_item_name(ItemType item) {
 
 void inventory(const ItemType inv[], int size) {
     for (int i = 0; i < size; i++) {
-        printf("Слот %d: [%d] (%s)\n", i, (int)inv[i], get_item_name(inv[i]));
-    }
+        printf("Слот %d: [%d] (%s)\n", i, (int)inv[i], get_item_name(inv[i])); 
+    } 
+    // inv[] адрес начала массива, size задается в main (case 3), inv[i] передается в get_item_name
 }
 
 int main(void) {
@@ -72,7 +73,27 @@ int main(void) {
         while ((c = getchar()) != '\n' && c != EOF) {}
 
         switch (choice) {
-            
+        case 0:
+            printf("Вы вышли из игры. Увидимся в следующий раз!\n");
+            break;
+
+        case 1:
+            printf("Текущее время: День %d, %02d:00\n",
+                current_day, current_hour);
+            break;
+
+        case 2: {
+            int hours;
+            printf("Сколько часов хотите поработать? ");
+            current_hour += hours;
+            current_day += current_hour / HOURS_IN_DAY;
+            current_hour = current_hour % HOURS_IN_DAY;
+
+            printf("Прошло %d ч. Текущее время: День %d, %02d:00\n",
+                hours, current_day, current_hour);
+            break;
+        }
+
         }
 
 }
