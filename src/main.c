@@ -43,7 +43,7 @@ const char* get_item_name(ItemType item) {
     case ITEM_SCYTHE: return "Коса";
     default:          return "Неизвестный предмет";
     }
-}
+}   
 
 void print_inventory(const ItemType inv[], int size) {
     for (int i = 0; i < size; i++) {
@@ -56,7 +56,7 @@ int main(void) {
     setlocale(LC_ALL, ""); // чтоб умная консоль выводила человеческий русский
     int current_day = 1;
     int current_hour = 8;
-    ItemType inventory[INVENTORY_SIZE]{
+    ItemType inventory[INVENTORY_SIZE] = {
         ITEM_EMPTY, ITEM_WOOD, ITEM_STONE, ITEM_SEEDS, ITEM_IRON,
         ITEM_WATER, ITEM_TORCH, ITEM_GOLD, ITEM_ROPE, ITEM_SCYTHE
     };
@@ -145,7 +145,7 @@ int main(void) {
         case 6: {
             int id, count = 0;
             printf("Введите ID предмета (1-9) для очистки: ");
-            if (!fool_check(scanf("%d", &id))) break;          
+            if (!fool_check(scanf("%d", &id))) break;
             if (id < 1 || id >= MAX_ITEMS) {
                 printf("ID должен быть от 1 до 9.\n");
                 break;
@@ -167,6 +167,7 @@ int main(void) {
             }
             break;
         }
+    }
     }
 
     return 0;
