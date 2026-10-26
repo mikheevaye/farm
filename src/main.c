@@ -1,6 +1,11 @@
 #include <stdio.h>
-#include <locale.h>
+#include <windows.h>
+#include <stdlib.h>
+#include <string.h>
 
+#define MAX_LINE_LEN       256
+#define MAX_NAME_LEN       32
+#define MAX_PLAYER_NAME    32
 #define HOURS_IN_DAY       24
 #define INVENTORY_SIZE     10
 #define MAX_ITEMS          10
@@ -13,6 +18,16 @@ int fool_check(int scanf_result) {
         return 0;
     }
     return 1;
+}
+
+void get_player_name(char player_name[], int max_len) { // массив символов, и max len (берется в main во время вызова)
+    printf("Вы вошли в игру 'Веселый фермер'! Введите ваше имя (до 32 символов): ");
+    fgets(player_name, max_len, stdin); //(запишет ввод в player name, смотрит максимум сколько можно, stdin это для компилятора "жди ввод с клавиатуры")
+    player_name[strcspn(player_name, "\r\n")] = '\0'; // strcspn бегает по строке и ищет энтер, находит - записывает перенос строки вместо него
+
+    if (player_name[0] == '\0') {
+        strcpy(player_name, "Фермер");  
+    } // '\0' - enter (ничего), strcpy копирует в массив деф.имя
 }
 
 
@@ -29,21 +44,18 @@ typedef enum {
     ITEM_SCYTHE,
 } ItemType;
 
-const char* get_item_name(ItemType item) {
-    switch (item) {
-    case ITEM_EMPTY:  return "Пусто";
-    case ITEM_WOOD:   return "Дерево";
-    case ITEM_STONE:  return "Камень";
-    case ITEM_SEEDS:  return "Семена";
-    case ITEM_IRON:   return "Железо";
-    case ITEM_WATER:  return "Вода";
-    case ITEM_TORCH:  return "Факел";
-    case ITEM_GOLD:   return "Золото";
-    case ITEM_ROPE:   return "Верёвка";
-    case ITEM_SCYTHE: return "Коса";
-    default:          return "Неизвестный предмет";
-    }
-}   
+const char* DEFAULT_ITEM_NAMES[MAX_ITEMS] = { // создает список неизменяемых текстовых названий для предметов, где каждому предмету соответствует свой порядковый номер (индекс).
+    "Пусто", // [MAX_ITEMS] размер списка
+    "Дерево",
+    "Камень",
+    "Семена",
+    "Железо",
+    "Вода",
+    "Факел",
+    "Золото",
+    "Верёвка",
+    "Коса"
+};
 
 void print_inventory(const ItemType inv[], int size) {
     for (int i = 0; i < size; i++) {
@@ -53,7 +65,12 @@ void print_inventory(const ItemType inv[], int size) {
 }
 
 int main(void) {
-    setlocale(LC_ALL, ""); // чтоб умная консоль выводила человеческий русский
+    SetConsoleOutputCP(CP_UTF8); // чтоб умная консоль выводила человеческий русский
+
+    char item_names[MAX_ITEMS][MAX_NAME_LEN];
+    char player_name[MAX_PLAYER_NAME];
+    get_player_name(player_name, MAX_PLAYER_NAME);
+
     int current_day = 1;
     int current_hour = 8;
     ItemType inventory[INVENTORY_SIZE] = {
@@ -63,7 +80,8 @@ int main(void) {
     int choice = -1;
 
     while (choice != 0) {
-        printf("\n============= Меню =============\n");
+        printf("Привет, %s! Добро пожаловать на ферму!\n", player_name);
+        printf("\n============= Меню (%s) =============\n");
         printf("[0] Выход\n");
         printf("[1] Посмотреть на часы\n");
         printf("[2] Промотать время (Поработать)\n");
