@@ -107,6 +107,16 @@ void print_inventory(const ItemType inv[], int size, char item_names[][MAX_NAME_
         }
 }
 
+int find_item_id_by_name(char names[][MAX_NAME_LEN], const char* word) {
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        if (strcmp(names[i], word) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 int main(void) {
     SetConsoleOutputCP(CP_UTF8); // чтоб умная консоль выводила человеческий русский
 
