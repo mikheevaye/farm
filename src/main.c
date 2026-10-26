@@ -116,22 +116,33 @@ int find_item_id_by_name(char names[][MAX_NAME_LEN], const char* word) {
     return -1;
 }
 
-void write_diary_entry(FILE* out, const char* player_name,
-    int day, int hour, const ItemType inv[], int size,
-    char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
-    fprintf(out, "===== Дневник фермера =====\n");
-    fprintf(out, "Имя: %s\n", player_name);
-    fprintf(out, "День: %d, Время: %02d:00\n", day, hour);
-    fprintf(out, "Инвентарь:\n");
+void write_diary_entry(FILE* out_screen, FILE* out_file,
+    const char* player_name,
+    int day, int hour,
+    const ItemType inv[], int size,
+    char item_names[MAX_ITEMS][MAX_NAME_LEN])
+{
+    FILE* streams[2] = { out_screen, out_file };
 
-    for (int i = 0; i < size; i++) {
-        int id = (int)inv[i];
+    for (int s = 0; s < 2; s++) {
+        FILE* out = streams[s];
+        if (out == NULL) continue;
+
+        fprintf(out, "===== Дневник фермера =====\n");
+        fprintf(out, "Имя: %s\n", player_name);
+        fprintf(out, "День: %d, Время: %02d:00\n", day, hour);
+        fprintf(out, "Инвентарь:\n");
+
         // в массиве проверяем лоежит ли предмет в диапазоне
-        const char* name = (id >= 0 && id < MAX_ITEMS) ? item_names[id] : "Неизвестный предмет";
-        fprintf(out, "  Слот %d: [%d] - %s\n", i, id, name);
-    }
+        for (int i = 0; i < size; i++) {
+            int id = (int)inv[i];
+            const char* name = (id >= 0 && id < MAX_ITEMS)
+                ? item_names[id] : "Неизвестный предмет";
+            fprintf(out, "  Слот %d: [%d] - %s\n", i, id, name);
+        }
 
-    fprintf(out, "==========================\n\n");
+        fprintf(out, "==========================\n\n");
+    }
 }
 
 int find_inventory_slots(const ItemType inv[], int size, int id,
@@ -211,6 +222,7 @@ int process_quests_to_streams(FILE* out_screen, FILE* out_file,
 
 int main(void) {
     SetConsoleOutputCP(CP_UTF8); // чтоб умная консоль выводила человеческий русский
+    SetConsoleCP(CP_UTF8);
 
     char item_names[MAX_ITEMS][MAX_NAME_LEN];
     items_catalog(item_names);
@@ -387,13 +399,18 @@ int main(void) {
 
         case 8: {
             FILE* diary = fopen("diary.txt", "a"); // старые записи не трогает
-            if (diary == NULL)
-            {
+            if (diary == NULL) {
                 printf("Не удалось открыть diary.txt.\n");
                 break;
             }
-            write_diary_entry(diary, player_name, current_day, current_hour,
-                inventory, INVENTORY_SIZE, item_names);
+
+            write_diary_entry(
+                stdout,
+                diary,
+                player_name, current_day, current_hour,
+                inventory, INVENTORY_SIZE, item_names
+            );
+
             fclose(diary);
             printf("Запись добавлена в diary.txt.\n");
             break;
