@@ -57,6 +57,45 @@ const char* DEFAULT_ITEM_NAMES[MAX_ITEMS] = { // создает список н�
     "Коса"
 };
 
+int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        strncpy(names[i], DEFAULT_ITEM_NAMES[i], MAX_NAME_LEN - 1); // Сначала заполняем массив значениями по умолчанию
+        names[i][MAX_NAME_LEN - 1] = '\0';
+    }
+
+    FILE* file = fopen("items.txt", "r"); // Пытаемся открыть файл
+    if (file == NULL) {
+        printf("Предупреждение: Файл %s не найден! Загружен каталог по умолчанию.\n", "items.txt");
+        return 0;   // файл не найден — массив уже заполнен дефолтами
+    }
+
+    char line[MAX_LINE_LEN];
+
+    while (fgets(line, sizeof(line), file) != NULL) { // Чтение строк в формате "ID Название". каждая строчка из файла по очереди помещается в переменную line
+        int id;
+        char name[MAX_NAME_LEN];
+
+        char format[20];
+        sprintf(format, "%%d %%%d[^\n]", MAX_NAME_LEN - 1); // Получится "%d %31[^\n]"
+
+        if (sscanf(line, format, &id, name) == 2) { // sscanf берёт прочитанную строчку line и распиливает её по шаблону format (выше).
+            // число кладётся в переменную id, а название предмета (текст) — в переменную name
+            // если =2, то значит достали ровно 2 элемента из строки
+            if (id >= 0 && id < MAX_ITEMS) {
+                trim_whitespace(name); // очищает от пробелов
+
+                if (name[0] != '\0') {
+                    strncpy(names[id], name, MAX_NAME_LEN - 1);
+                    names[id][MAX_NAME_LEN - 1] = '\0'; // название -> в итоговый каталог под тем номером id, под которым оно шло в файле. Старое дефолтное имя заменяем новым из файла
+                } 
+            }
+        }
+    }
+
+    fclose(file);
+    return 1;
+}
+
 void print_inventory(const ItemType inv[], int size) {
     for (int i = 0; i < size; i++) {
         printf("Слот %d: [%d] (%s)\n", i, (int)inv[i], get_item_name(inv[i])); 
