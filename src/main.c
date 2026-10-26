@@ -20,14 +20,14 @@ int fool_check(int scanf_result) {
     return 1;
 }
 
-void get_player_name(char player_name[], int max_len) { // массив символов, и max len (берется в main во время вызова)
+void get_player_name(char player_name[], int max_len) { 
     printf("Вы вошли в игру 'Веселый фермер'! Введите ваше имя (до 32 символов): ");
-    fgets(player_name, max_len, stdin); //(запишет ввод в player name, смотрит максимум сколько можно, stdin это для компилятора "жди ввод с клавиатуры")
-    player_name[strcspn(player_name, "\r\n")] = '\0'; // strcspn бегает по строке и ищет энтер, находит - записывает перенос строки вместо него
+    fgets(player_name, max_len, stdin);
+    player_name[strcspn(player_name, "\r\n")] = '\0'; 
 
     if (player_name[0] == '\0') {
         strcpy(player_name, "Фермер");  
-    } // '\0' - enter (ничего), strcpy копирует в массив деф.имя
+    }
 }
 
 
@@ -44,8 +44,8 @@ typedef enum {
     ITEM_SCYTHE,
 } ItemType;
 
-const char* DEFAULT_ITEM_NAMES[MAX_ITEMS] = { // создает список неизменяемых текстовых названий для предметов, где каждому предмету соответствует свой порядковый номер (индекс).
-    "Пусто", // [MAX_ITEMS] размер списка
+const char* DEFAULT_ITEM_NAMES[MAX_ITEMS] = {
+    "Пусто", 
     "Дерево",
     "Камень",
     "Семена",
@@ -63,7 +63,7 @@ int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
         names[i][MAX_NAME_LEN - 1] = '\0';
     }
 
-    FILE* file = fopen("items.txt", "r"); // Пытаемся открыть файл
+    FILE* file = fopen("items.txt", "r");
     if (file == NULL) {
         printf("Предупреждение: Файл %s не найден! Загружен каталог по умолчанию.\n", "items.txt");
         return 0;   // файл не найден — массив уже заполнен дефолтами
@@ -71,22 +71,20 @@ int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
 
     char line[MAX_LINE_LEN];
 
-    while (fgets(line, sizeof(line), file) != NULL) { // Чтение строк в формате "ID Название". каждая строчка из файла по очереди помещается в переменную line
+    while (fgets(line, sizeof(line), file) != NULL) { 
         int id;
         char name[MAX_NAME_LEN];
 
         char format[20];
         sprintf(format, "%%d %%%d[^\n]", MAX_NAME_LEN - 1); // Получится "%d %31[^\n]"
 
-        if (sscanf(line, format, &id, name) == 2) { // sscanf берёт прочитанную строчку line и распиливает её по шаблону format (выше).
-            // число кладётся в переменную id, а название предмета (текст) — в переменную name
-            // если =2, то значит достали ровно 2 элемента из строки
+        if (sscanf(line, format, &id, name) == 2) {
             if (id >= 0 && id < MAX_ITEMS) {
                 trim_whitespace(name); // очищает от пробелов
 
                 if (name[0] != '\0') {
                     strncpy(names[id], name, MAX_NAME_LEN - 1);
-                    names[id][MAX_NAME_LEN - 1] = '\0'; // название -> в итоговый каталог под тем номером id, под которым оно шло в файле. Старое дефолтное имя заменяем новым из файла
+                    names[id][MAX_NAME_LEN - 1] = '\0';
                 } 
             }
         }
@@ -96,11 +94,17 @@ int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
     return 1;
 }
 
-void print_inventory(const ItemType inv[], int size) {
-    for (int i = 0; i < size; i++) {
-        printf("Слот %d: [%d] (%s)\n", i, (int)inv[i], get_item_name(inv[i])); 
-    } 
-    // inv[] адрес начала массива, size задается в main (case 3), inv[i] передается в get_item_name
+void print_inventory(const ItemType inv[], int size, char item_names[][MAX_NAME_LEN]) {
+        for (int i = 0; i < size; i++) {
+            int id = (int)inv[i];
+            const char* name = "Неизвестный предмет";
+
+            if (id >= 0 && id < MAX_ITEMS) {
+                name = item_names[id]; // подстановка названия по ID
+            }
+
+            printf("Слот %d: [%d] - %s\n", i, id, name);
+        }
 }
 
 int main(void) {
@@ -162,7 +166,7 @@ int main(void) {
         }
 
         case 3:
-            print_inventory(inventory, INVENTORY_SIZE);
+            print_inventory(inventory, INVENTORY_SIZE, item_names);
             break;
 
         case 4: {
