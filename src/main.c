@@ -231,6 +231,23 @@ int process_quests_to_streams(FILE* out_screen, FILE* out_file,
     return 0;
 }
 
+void process_quests_action(int day, ItemType inv[], char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
+    FILE* out_file = fopen("output.txt", "w");
+    if (out_file == NULL) {
+        printf("Ошибка: не удалось создать файл output.txt\n");
+        return;
+    }
+    int res = process_quests_to_streams(stdout, out_file, "input.txt", day, inv, INVENTORY_SIZE, item_names);
+    fclose(out_file);
+
+    if (res != 0) {
+        printf("Ошибка: файл input.txt не найден!\n");
+    }
+    else {
+        printf("Заказы записаны в output.txt!\n");
+    }
+}
+
 int main(void) {
     SetConsoleOutputCP(CP_UTF8); // чтоб умная консоль выводила человеческий русский
     SetConsoleCP(CP_UTF8);
@@ -413,31 +430,9 @@ int main(void) {
             save_diary_action(player_name, current_day, current_hour, inventory, item_names);
             break;
 
-        case 9: {
-            FILE* out_file = fopen("output.txt", "w");
-
-            if (out_file == NULL) {
-                printf("Ошибка: не удалось открыть файл output.txt для записи.\n");
-                break;
-            }
-
-            int result = process_quests_to_streams(
-                stdout, out_file,          // экран и файл
-                "input.txt", current_day,  // входной файл и текущий день
-                inventory, INVENTORY_SIZE,
-                item_names
-            );
-
-            fclose(out_file);
-
-            if (result != 0) {
-                printf("Ошибка: не удалось открыть файл input.txt.\n");
-                break;
-            }
-
-            printf("Результат записан в файл output.txt.\n");
+        case 9:
+            process_quests_action(current_day, inventory, item_names);
             break;
-        }
     }
     }
 
