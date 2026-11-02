@@ -288,19 +288,7 @@ void print_map(char** map, int height, int width, int floor) {
     printf("W/A/S/D - походить на 1 клетку, \n Q - сбежать домой (возможно только на %c)\n", SYM_LADDER_DOWN);
 }
 
-// 3. Отрисовка карты
-void print_map(char** map, int height, int width, int floor) {
-    printf("\n=== Башня: этаж %d ===\n", floor);
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            printf("%c ", map[y][x]);
-        }
-        printf("\n");
-    }
-    printf("W/A/S/D - шаг, Q - сбежать домой (только на %c)\n", SYM_LADDER_DOWN);
-}
-
-// 4. Генерация этажа
+// Генерация этажа
 void make_floor(char** map, int height, int width, int is_vertical, int* player_start_x, int* player_start_y, char* under) {
 
     for (int y = 0; y < height; y++) {
@@ -371,6 +359,101 @@ void make_floor(char** map, int height, int width, int is_vertical, int* player_
     map[*player_start_y][*player_start_x] = SYM_PLAYER;
 }
 
+// [10] - Отправиться в приключение
+void adventure_action(void) {
+    int floor = 1;
+    int height = 7 + (rand() % 6) * 2; // Нечетные размеры для ровной середины
+    int width = 7 + (rand() % 6) * 2;
+    int is_vertical = rand() % 2; // 1 - будет вертикально, 0 - горизонтально
+
+    char** map = create_map(height, width);
+    int player_start_x, player_start_y;
+    char under;
+
+    make_floor(map, height, width, is_vertical, &player_start_x, &player_start_y, &under);
+
+    while (1) {
+        print_map(map, height, width, floor);
+
+        char move;
+        printf("Ваш ход: ");
+        scanf(" %c", &move);
+
+        if (move == 'q' || move == 'Q') {
+            if (under == SYM_LADDER_DOWN) {
+                printf("\nВы успешно сбежали домой!\n");
+                break;
+            }
+            else {
+                printf("\nВыход работает только если вы стоите на лестнице вниз (%c)!\n", SYM_LADDER_DOWN);
+                continue;
+            }
+        }
+
+        int new_x = player_start_x;
+        int new_y = player_start_y;
+
+        if (move == 'w' || move == 'W') new_y--;
+        else if (move == 's' || move == 'S') new_y++;
+        else if (move == 'a' || move == 'A') new_x--;
+        else if (move == 'd' || move == 'D') new_x++;
+        else {
+            printf("\nИспользуйте клавиши W, A, S, D или Q!\n");
+            continue;
+        }
+
+        // проверка проходимости
+        if (new_x < 0 || new_x >= width || new_y < 0 || new_y >= height) {
+            printf("\nВы не можете пройти дальше, это край карты... Попробуйте другое направление.\n");
+            continue;
+        }
+
+        if (map[new_y][new_x] == SYM_WALL || map[new_y][new_x] == SYM_TREE || map[new_y][new_x] == SYM_ROCK) {
+            printf("\nВы не можете пройти сквозьь препятствие...\n");
+            continue;
+        }
+
+        // ход
+        map[player_start_y][player_start_x] = under;
+        player_start_x = new_x;
+        player_start_y = new_y;
+        under = map[player_start_y][player_start_x];
+        map[player_start_y][player_start_x] = SYM_PLAYER;
+
+        if (under == SYM_SWITCH) {
+            printf("\n*ЩЕЛК* Стена посередине исчезла!\n");
+            if (is_vertical) {
+                int mid = width / 2;
+                for (int y = 1; y < height - 1; y++) {
+                    map[y][mid] = SYM_FLOOR;
+                }
+            }
+            else {
+                int mid = height / 2;
+                for (int x = 1; x < width - 1; x++) {
+                    map[mid][x] = SYM_FLOOR;
+                }
+            }
+            under = SYM_FLOOR;
+        }
+
+        if (under == SYM_LADDER_UP) {
+            printf("\nВы поднялись на следующий этаж!\n");
+            floor++;
+
+            free_map(map, height); // Освобождаем память старого этажа
+
+            height = 7 + (rand() % 6) * 2;
+            width = 7 + (rand() % 6) * 2;
+            is_vertical = rand() % 2;
+
+            map = create_map(height, width);
+            make_floor(map, height, width, is_vertical, &player_start_x, &player_start_y, &under);
+        }
+    }
+
+    free_map(map, height);
+}
 
 int main(void) {
     SetConsoleOutputCP(CP_UTF8); // чтоб умная консоль выводила человеческий русский
@@ -558,6 +641,14 @@ int main(void) {
 
         case 9:
             process_quests_action(current_day, inventory, item_names);
+            break;
+        
+        case 10:
+            adventure_action();
+            break;
+
+        default:
+            printf("Неверный пункт меню.\n");
             break;
         }
     }
