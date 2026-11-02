@@ -307,6 +307,7 @@ void make_floor(char** map, int height, int width, int is_vertical, int* player_
         map[height - 1][x] = SYM_WALL; // (#)
     }
 
+    // вертикальная стена
     if (is_vertical) {
         int mid = width / 2;
         for (int y = 0; y < height; y++) {
