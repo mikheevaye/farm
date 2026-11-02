@@ -144,13 +144,12 @@ void write_diary_entry(FILE* out_screen, FILE* out_file,
         fprintf(out, "День: %d, Время: %02d:00\n", day, hour);
         fprintf(out, "Инвентарь:\n");
 
-        // в массиве проверяем лежит ли предмет в диапазоне
-        for (int i = 0; i < size; i++) {
-            int id = (int)inv[i];
-            const char* name = (id >= 0 && id < MAX_ITEMS)
-                ? item_names[id] : "Неизвестный предмет";
-            fprintf(out, "  Слот %d: [%d] - %s\n", i, id, name);
-        }
+    for (int i = 0; i < size; i++) {
+        int id = (int)inv[i];
+        // в массиве проверяем лоежит ли предмет в диапазоне
+        const char* name = (id >= 0 && id < MAX_ITEMS) ? item_names[id] : "Неизвестный предмет";
+        fprintf(out, "  Слот %d: [%d] - %s\n", i, id, name);
+    }
 
         fprintf(out, "==========================\n\n");
     }
