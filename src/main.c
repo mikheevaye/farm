@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define MAX_LINE_LEN       256
 #define MAX_NAME_LEN       32
@@ -287,9 +288,20 @@ void print_map(char** map, int height, int width, int floor) {
     printf("W/A/S/D - походить на 1 клетку, \n Q - сбежать домой (возможно только на %c)\n", SYM_LADDER_DOWN);
 }
 
-// Генерация этажа
-void make_floor(char** map, int height, int width, int* player_start_x, int* player_start_y, char* under) {
-    int mid = width / 2;
+// 3. Отрисовка карты
+void print_map(char** map, int height, int width, int floor) {
+    printf("\n=== Башня: этаж %d ===\n", floor);
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            printf("%c ", map[y][x]);
+        }
+        printf("\n");
+    }
+    printf("W/A/S/D - шаг, Q - сбежать домой (только на %c)\n", SYM_LADDER_DOWN);
+}
+
+// 4. Генерация этажа
+void make_floor(char** map, int height, int width, int is_vertical, int* player_start_x, int* player_start_y, char* under) {
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -297,6 +309,7 @@ void make_floor(char** map, int height, int width, int* player_start_x, int* pla
         }
     }
 
+    // Внешние стены по периметру
     for (int y = 0; y < height; y++) {
         map[y][0] = SYM_WALL;
         map[y][width - 1] = SYM_WALL; // (#)
@@ -306,35 +319,58 @@ void make_floor(char** map, int height, int width, int* player_start_x, int* pla
         map[height - 1][x] = SYM_WALL; // (#)
     }
 
-    for (int y = 0; y < height; y++) {
-        map[y][mid] = SYM_WALL;
-    }
-
-    // Препятствия в левой половине и их зеркальное отражение в правую
-    for (int y = 2; y < height - 2; y++) {
-        for (int x = 2; x < mid; x++) {
-            int r = rand() % 10;
-            if (r == 0) {
-                map[y][x] = SYM_TREE;
-            }
-            else if (r == 1) {
-                map[y][x] = SYM_ROCK;
-            }
-
-            int mirror_x = width - 1 - x;
-            map[y][mirror_x] = map[y][x];
+    if (is_vertical) {
+        int mid = width / 2;
+        for (int y = 0; y < height; y++) {
+            map[y][mid] = SYM_WALL;
         }
+
+        for (int y = 2; y < height - 2; y++) {
+            for (int x = 2; x < mid; x++) {
+                int r = rand() % 10;
+                if (r == 0) map[y][x] = SYM_TREE;
+                else if (r == 1) map[y][x] = SYM_ROCK;
+
+                int mirror_x = width - 1 - x;
+                map[y][mirror_x] = map[y][x];
+            }
+        }
+
+        *player_start_x = 1;
+        *player_start_y = 1;
+        map[height - 2][1] = SYM_SWITCH;
+
+        map[height - 2][width - 2] = SYM_LADDER_UP;
+    }
+    // стена по горизонтали
+    else {
+        int mid = height / 2;
+        for (int x = 0; x < width; x++) {
+            map[mid][x] = SYM_WALL;
+        }
+
+        for (int y = 2; y < mid; y++) {
+            for (int x = 2; x < width - 2; x++) {
+                int r = rand() % 10;
+                if (r == 0) map[y][x] = SYM_TREE;
+                else if (r == 1) map[y][x] = SYM_ROCK;
+
+                int mirror_y = height - 1 - y;
+                map[mirror_y][x] = map[y][x];
+            }
+        }
+
+        *player_start_x = 1;
+        *player_start_y = 1;
+        map[1][width - 2] = SYM_SWITCH;
+
+        map[height - 2][width - 2] = SYM_LADDER_UP;
     }
 
-    *player_start_x = 1;
-    *player_start_y = 1;
     *under = SYM_LADDER_DOWN;
     map[*player_start_y][*player_start_x] = SYM_PLAYER;
-
-    map[height - 2][1] = SYM_SWITCH;
-
-    map[height - 2][width - 2] = SYM_LADDER_UP;
 }
+
 
 int main(void) {
     SetConsoleOutputCP(CP_UTF8); // чтоб умная консоль выводила человеческий русский
@@ -344,6 +380,7 @@ int main(void) {
     items_catalog(item_names);
     char player_name[MAX_PLAYER_NAME];
     get_player_name(player_name, MAX_PLAYER_NAME);
+    srand((unsigned int)time(NULL));
 
     int current_day = 1;
     int current_hour = 8;
@@ -365,8 +402,9 @@ int main(void) {
         printf("[5] Выбросить предмет\n");
         printf("[6] Очистить инвентарь от мусора\n");
         printf("[7] Поиск предмета в рюкзаке по названию\n");
-        printf("[8] Записать состояние в дневник фермера (diary.txt) \n");
+        printf("[8] Записать состояние в дневник фермера (diary.txt)\n");
         printf("[9] Расшифровать старые записи\n");
+        printf("[10] Отправиться в приключение\n");
         printf("=======================================\n");
         printf("Что хотите сделать?: ");
 
@@ -521,7 +559,7 @@ int main(void) {
         case 9:
             process_quests_action(current_day, inventory, item_names);
             break;
-    }
+        }
     }
 
     return 0;
