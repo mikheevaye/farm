@@ -287,6 +287,31 @@ void print_map(char** map, int height, int width, int floor) {
     printf("W/A/S/D - походить на 1 клетку, \n Q - сбежать домой (возможно только на %c)\n", SYM_LADDER_DOWN);
 }
 
+// Генерация этажа
+void make_floor(char** map, int height, int width, int* player_start_x, int* player_start_y, char* under) {
+    int mid = width / 2;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            map[y][x] = SYM_FLOOR; // (.)
+        }
+    }
+
+    for (int y = 0; y < height; y++) {
+        map[y][0] = SYM_WALL;
+        map[y][width - 1] = SYM_WALL; // (#)
+    }
+    for (int x = 0; x < width; x++) {
+        map[0][x] = SYM_WALL;
+        map[height - 1][x] = SYM_WALL; // (#)
+    }
+
+    for (int y = 0; y < height; y++) {
+        map[y][mid] = SYM_WALL;
+    }
+
+}
+
 int main(void) {
     SetConsoleOutputCP(CP_UTF8); // чтоб умная консоль выводила человеческий русский
     SetConsoleCP(CP_UTF8);
