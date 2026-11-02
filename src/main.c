@@ -10,6 +10,16 @@
 #define INVENTORY_SIZE     10
 #define MAX_ITEMS          10
 
+// Символы для карты
+#define SYM_WALL           '#'
+#define SYM_FLOOR          '.'
+#define SYM_PLAYER         '@'
+#define SYM_LADDER_DOWN    'D'
+#define SYM_LADDER_UP      'U'
+#define SYM_SWITCH         'P'
+#define SYM_TREE           'T'
+#define SYM_ROCK           'R'
+
 int fool_check(int scanf_result) {
     int ch;
     while ((ch = getchar()) != '\n' && ch != EOF);
@@ -263,6 +273,18 @@ void free_map(char** map, int height) {
         free(map[i]);
     }
     free(map);
+}
+
+// Отрисовка карты
+void print_map(char** map, int height, int width, int floor) {
+    printf("\n=== Башня: этаж %d ===\n", floor);
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            printf("%c ", map[y][x]);
+        }
+        printf("\n");
+    }
+    printf("W/A/S/D - походить на 1 клетку, \n Q - сбежать домой (возможно только на %c)\n", SYM_LADDER_DOWN);
 }
 
 int main(void) {
