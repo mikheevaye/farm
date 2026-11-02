@@ -145,6 +145,17 @@ void write_diary_entry(FILE* out_screen, FILE* out_file,
     }
 }
 
+void save_diary_action(const char* name, int day, int hour, ItemType inv[], char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
+    FILE* diary = fopen("diary.txt", "a");
+    if (diary == NULL) {
+        printf("Ошибка. Не найден файл diary.txt\n");
+        return;
+    }
+    write_diary_entry(stdout, diary, name, day, hour, inv, INVENTORY_SIZE, item_names);
+    fclose(diary);
+    printf("Запись сохранена в diary.txt!\n");
+}
+
 int find_inventory_slots(const ItemType inv[], int size, int id,
     int slots[], int max_slots) {
     int count = 0;
@@ -237,8 +248,9 @@ int main(void) {
     };
     int choice = -1;
 
+    printf("Привет, %s! Добро пожаловать на ферму!\n", player_name);
+
     while (choice != 0) {
-        printf("Привет, %s! Добро пожаловать на ферму!\n", player_name);
         printf("\n============= Меню (%s) =============\n", player_name);
         printf("[0] Выход\n");
         printf("[1] Посмотреть на часы\n");
@@ -397,24 +409,9 @@ int main(void) {
             break;
         }
 
-        case 8: {
-            FILE* diary = fopen("diary.txt", "a"); // старые записи не трогает
-            if (diary == NULL) {
-                printf("Не удалось открыть diary.txt.\n");
-                break;
-            }
-
-            write_diary_entry(
-                stdout,
-                diary,
-                player_name, current_day, current_hour,
-                inventory, INVENTORY_SIZE, item_names
-            );
-
-            fclose(diary);
-            printf("Запись добавлена в diary.txt.\n");
+        case 8:
+            save_diary_action(player_name, current_day, current_hour, inventory, item_names);
             break;
-        }
 
         case 9: {
             FILE* out_file = fopen("output.txt", "w");
