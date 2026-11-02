@@ -248,6 +248,23 @@ void process_quests_action(int day, ItemType inv[], char item_names[MAX_ITEMS][M
     }
 }
 
+// Выделение памяти
+char** create_map(int height, int width) { 
+    char** map = (char**)malloc(height * sizeof(char*)); // (sizeof(char*) размер одного указателя
+    for (int i = 0; i < height; i++) {
+        map[i] = (char*)malloc(width * sizeof(char));
+    }
+    return map;
+}
+
+// Освобождение памяти
+void free_map(char** map, int height) {
+    for (int i = 0; i < height; i++) {
+        free(map[i]);
+    }
+    free(map);
+}
+
 int main(void) {
     SetConsoleOutputCP(CP_UTF8); // чтоб умная консоль выводила человеческий русский
     SetConsoleCP(CP_UTF8);
