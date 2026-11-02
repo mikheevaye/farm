@@ -144,7 +144,7 @@ void write_diary_entry(FILE* out_screen, FILE* out_file,
         fprintf(out, "День: %d, Время: %02d:00\n", day, hour);
         fprintf(out, "Инвентарь:\n");
 
-        // в массиве проверяем лоежит ли предмет в диапазоне
+        // в массиве проверяем лежит ли предмет в диапазоне
         for (int i = 0; i < size; i++) {
             int id = (int)inv[i];
             const char* name = (id >= 0 && id < MAX_ITEMS)
@@ -393,10 +393,10 @@ void adventure_action(void) {
         int new_x = player_start_x;
         int new_y = player_start_y;
 
-        if (move == 'w' || move == 'W') new_y--;
-        else if (move == 's' || move == 'S') new_y++;
-        else if (move == 'a' || move == 'A') new_x--;
-        else if (move == 'd' || move == 'D') new_x++;
+        if (move == 'w' || move == 'W') new_y++;
+        else if (move == 's' || move == 'S') new_y--;
+        else if (move == 'a' || move == 'A') new_x++;
+        else if (move == 'd' || move == 'D') new_x--;
         else {
             printf("\nИспользуйте клавиши W, A, S, D или Q!\n");
             continue;
