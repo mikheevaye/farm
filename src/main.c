@@ -395,8 +395,8 @@ void adventure_action(void) {
 
         if (move == 'w' || move == 'W') new_y++;
         else if (move == 's' || move == 'S') new_y--;
-        else if (move == 'a' || move == 'A') new_x++;
-        else if (move == 'd' || move == 'D') new_x--;
+        else if (move == 'a' || move == 'A') new_x--;
+        else if (move == 'd' || move == 'D') new_x++;
         else {
             printf("\nИспользуйте клавиши W, A, S, D или Q!\n");
             continue;
