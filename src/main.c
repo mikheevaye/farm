@@ -310,6 +310,30 @@ void make_floor(char** map, int height, int width, int* player_start_x, int* pla
         map[y][mid] = SYM_WALL;
     }
 
+    // Препятствия в левой половине и их зеркальное отражение в правую
+    for (int y = 2; y < height - 2; y++) {
+        for (int x = 2; x < mid; x++) {
+            int r = rand() % 10;
+            if (r == 0) {
+                map[y][x] = SYM_TREE;
+            }
+            else if (r == 1) {
+                map[y][x] = SYM_ROCK;
+            }
+
+            int mirror_x = width - 1 - x;
+            map[y][mirror_x] = map[y][x];
+        }
+    }
+
+    *player_start_x = 1;
+    *player_start_y = 1;
+    *under = SYM_LADDER_DOWN;
+    map[*player_start_y][*player_start_x] = SYM_PLAYER;
+
+    map[height - 2][1] = SYM_SWITCH;
+
+    map[height - 2][width - 2] = SYM_LADDER_UP;
 }
 
 int main(void) {
