@@ -276,104 +276,110 @@ void free_map(char** map, int height) {
 }
 
 // Отрисовка карты
-void print_map(char** map, int height, int width, int floor) {
+void print_map(char** map, int height, int width, int floor,
+    int is_vertical, int wall_active)
+{
     printf("\n=== Башня: этаж %d ===\n", floor);
+    int mid = is_vertical ? width / 2 : height / 2;
+
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            printf("%c ", map[y][x]);
+            char c;
+            int hidden = wall_active && ((is_vertical && x > mid) || (!is_vertical && y > mid));
+
+            if (hidden) {
+                int mid_x = is_vertical ? (width - 1 - x) : x;
+                int mid_y = is_vertical ? y : (height - 1 - y);
+                c = map[mid_y][mid_x];
+            }
+            else {
+                c = map[y][x];
+            }
+            printf("%c ", c);
         }
+
         printf("\n");
     }
-    printf("W/A/S/D - походить на 1 клетку, \n Q - сбежать домой (возможно только на %c)\n", SYM_LADDER_DOWN);
+    printf("W/A/S/D - походить на 1 клетку, \n Q - сбежать домой (возможно только на %c)\n",
+        SYM_LADDER_DOWN);
 }
 
 // Генерация этажа
-void make_floor(char** map, int height, int width, int is_vertical, int* player_start_x, int* player_start_y, char* under) {
+void make_floor(char** map, int height, int width, int is_vertical,
+    int* player_start_x, int* player_start_y, char* under) {
 
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            map[y][x] = SYM_FLOOR; // (.)
-        }
-    }
+    for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
+            map[y][x] = SYM_FLOOR;
 
-    // Внешние стены по периметру
+    // Внешние стены
     for (int y = 0; y < height; y++) {
         map[y][0] = SYM_WALL;
-        map[y][width - 1] = SYM_WALL; // (#)
+        map[y][width - 1] = SYM_WALL;
     }
     for (int x = 0; x < width; x++) {
         map[0][x] = SYM_WALL;
-        map[height - 1][x] = SYM_WALL; // (#)
+        map[height - 1][x] = SYM_WALL;
     }
 
-    // вертикальная стена
     if (is_vertical) {
         int mid = width / 2;
-        for (int y = 0; y < height; y++) {
-            map[y][mid] = SYM_WALL;
-        }
-
-        for (int y = 2; y < height - 2; y++) {
-            for (int x = 2; x < mid; x++) {
+        for (int y = 2; y < height - 2; y++)
+            for (int x = 2; x < width; x++) {
                 int r = rand() % 10;
-                if (r == 0) map[y][x] = SYM_TREE;
+                if (r == 0)      map[y][x] = SYM_TREE;
                 else if (r == 1) map[y][x] = SYM_ROCK;
-
-                int mirror_x = width - 1 - x;
-                map[y][mirror_x] = map[y][x];
             }
-        }
+
+        // Стена посередине
+        for (int y = 0; y < height; y++)
+            map[y][mid] = SYM_WALL;
+
 
         *player_start_x = 1;
         *player_start_y = 1;
         map[height - 2][1] = SYM_SWITCH;
-
         map[height - 2][width - 2] = SYM_LADDER_UP;
     }
-    // стена по горизонтали
     else {
         int mid = height / 2;
-        for (int x = 0; x < width; x++) {
-            map[mid][x] = SYM_WALL;
-        }
-
-        for (int y = 2; y < mid; y++) {
+        for (int y = 2; y < height; y++)
             for (int x = 2; x < width - 2; x++) {
                 int r = rand() % 10;
-                if (r == 0) map[y][x] = SYM_TREE;
+                if (r == 0)      map[y][x] = SYM_TREE;
                 else if (r == 1) map[y][x] = SYM_ROCK;
-
-                int mirror_y = height - 1 - y;
-                map[mirror_y][x] = map[y][x];
             }
-        }
+
+        // Стена посередине
+        for (int x = 0; x < width; x++)
+            map[mid][x] = SYM_WALL;
 
         *player_start_x = 1;
         *player_start_y = 1;
         map[1][width - 2] = SYM_SWITCH;
-
         map[height - 2][width - 2] = SYM_LADDER_UP;
     }
 
     *under = SYM_LADDER_DOWN;
     map[*player_start_y][*player_start_x] = SYM_PLAYER;
 }
-
 // [10] - Отправиться в приключение
 void adventure_action(void) {
     int floor = 1;
-    int height = 7 + (rand() % 6) * 2; // Нечетные размеры для ровной середины
-    int width = 7 + (rand() % 6) * 2;
-    int is_vertical = rand() % 2; // 1 - будет вертикально, 0 - горизонтально
+    int height = 7 + (rand() % 6) * 2;   // всегда нечётное
+    int width = 7 + (rand() % 6) * 2;   // всегда нечётное
+    int is_vertical = rand() % 2;
+    int wall_active = 1;                 // маскировка вкл
 
     char** map = create_map(height, width);
     int player_start_x, player_start_y;
     char under;
 
-    make_floor(map, height, width, is_vertical, &player_start_x, &player_start_y, &under);
+    make_floor(map, height, width, is_vertical,
+        &player_start_x, &player_start_y, &under);
 
     while (1) {
-        print_map(map, height, width, floor);
+        print_map(map, height, width, floor, is_vertical, wall_active);
 
         char move;
         printf("Ваш ход: ");
@@ -385,7 +391,8 @@ void adventure_action(void) {
                 break;
             }
             else {
-                printf("\nВыход работает только если вы стоите на лестнице вниз (%c)!\n", SYM_LADDER_DOWN);
+                printf("\nВыход работает только если вы стоите на лестнице вниз (%c)!\n",
+                    SYM_LADDER_DOWN);
                 continue;
             }
         }
@@ -402,18 +409,21 @@ void adventure_action(void) {
             continue;
         }
 
-        // проверка проходимости
+        // Проверка границ
         if (new_x < 0 || new_x >= width || new_y < 0 || new_y >= height) {
             printf("\nВы не можете пройти дальше, это край карты... Попробуйте другое направление.\n");
+                continue;
+        }
+
+        // Проверка проходимости
+        if (map[new_y][new_x] == SYM_WALL ||
+            map[new_y][new_x] == SYM_TREE ||
+            map[new_y][new_x] == SYM_ROCK) {
+            printf("\nВы не можете пройти сквозь препятствие...\n");
             continue;
         }
 
-        if (map[new_y][new_x] == SYM_WALL || map[new_y][new_x] == SYM_TREE || map[new_y][new_x] == SYM_ROCK) {
-            printf("\nВы не можете пройти сквозьь препятствие...\n");
-            continue;
-        }
-
-        // ход
+        // Ход
         map[player_start_y][player_start_x] = under;
         player_start_x = new_x;
         player_start_y = new_y;
@@ -422,17 +432,15 @@ void adventure_action(void) {
 
         if (under == SYM_SWITCH) {
             printf("\n*ЩЕЛК* Стена посередине исчезла!\n");
+            wall_active = 0; // маскировка выключена
+
             if (is_vertical) {
                 int mid = width / 2;
-                for (int y = 1; y < height - 1; y++) {
-                    map[y][mid] = SYM_FLOOR;
-                }
+                for (int y = 1; y < height - 1; y++) map[y][mid] = SYM_FLOOR;
             }
             else {
                 int mid = height / 2;
-                for (int x = 1; x < width - 1; x++) {
-                    map[mid][x] = SYM_FLOOR;
-                }
+                for (int x = 1; x < width - 1; x++) map[mid][x] = SYM_FLOOR;
             }
             under = SYM_FLOOR;
         }
@@ -441,14 +449,16 @@ void adventure_action(void) {
             printf("\nВы поднялись на следующий этаж!\n");
             floor++;
 
-            free_map(map, height); // Освобождаем память старого этажа
+            free_map(map, height);
 
             height = 7 + (rand() % 6) * 2;
             width = 7 + (rand() % 6) * 2;
             is_vertical = rand() % 2;
+            wall_active = 1; // ← новый этаж — маскировка вкл
 
             map = create_map(height, width);
-            make_floor(map, height, width, is_vertical, &player_start_x, &player_start_y, &under);
+            make_floor(map, height, width, is_vertical,
+                &player_start_x, &player_start_y, &under);
         }
     }
 
