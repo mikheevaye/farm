@@ -454,7 +454,7 @@ void adventure_action(void) {
             height = 7 + (rand() % 6) * 2;
             width = 7 + (rand() % 6) * 2;
             is_vertical = rand() % 2;
-            wall_active = 1; // ← новый этаж — маскировка вкл
+            wall_active = 1; // ← новый этаж — маскировка включ
 
             map = create_map(height, width);
             make_floor(map, height, width, is_vertical,
