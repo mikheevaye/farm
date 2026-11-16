@@ -4,12 +4,11 @@
 #include <string.h>
 #include <time.h>
 
-#define MAX_LINE_LEN       256
-#define MAX_NAME_LEN       32
-#define MAX_PLAYER_NAME    32
+#include <windows.h>
+
+#include "player.h"
+
 #define HOURS_IN_DAY       24
-#define INVENTORY_SIZE     10
-#define MAX_ITEMS          10
 
 // Символы для карты
 #define SYM_WALL           '#'
@@ -41,20 +40,6 @@ void get_player_name(char player_name[], int max_len) {
     }
 }
 
-
-typedef enum {
-    ITEM_EMPTY,
-    ITEM_WOOD,
-    ITEM_STONE,
-    ITEM_SEEDS,
-    ITEM_IRON,
-    ITEM_WATER,
-    ITEM_TORCH,
-    ITEM_GOLD,
-    ITEM_ROPE,
-    ITEM_SCYTHE,
-} ItemType;
-
 const char* DEFAULT_ITEM_NAMES[MAX_ITEMS] = {
     "Пусто", 
     "Дерево",
@@ -67,42 +52,6 @@ const char* DEFAULT_ITEM_NAMES[MAX_ITEMS] = {
     "Верёвка",
     "Коса"
 };
-
-int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
-    for (int i = 0; i < MAX_ITEMS; i++) {
-        strncpy(names[i], DEFAULT_ITEM_NAMES[i], MAX_NAME_LEN - 1); // Сначала заполняем массив значениями по умолчанию
-        names[i][MAX_NAME_LEN - 1] = '\0';
-    }
-
-    FILE* file = fopen("items.txt", "r");
-    if (file == NULL) {
-        printf("Предупреждение: Файл %s не найден! Загружен каталог по умолчанию.\n", "items.txt");
-        return 0;   // файл не найден — массив уже заполнен дефолтами
-    }
-
-    char line[MAX_LINE_LEN];
-
-    while (fgets(line, sizeof(line), file) != NULL) { 
-        int id;
-        char name[MAX_NAME_LEN];
-
-        char format[20];
-        sprintf(format, "%%d %%%d[^\n]", MAX_NAME_LEN - 1); // Получится "%d %31[^\n]"
-
-        if (sscanf(line, format, &id, name) == 2) {
-            if (id >= 0 && id < MAX_ITEMS) {
-
-                if (name[0] != '\0') {
-                    strncpy(names[id], name, MAX_NAME_LEN - 1);
-                    names[id][MAX_NAME_LEN - 1] = '\0';
-                } 
-            }
-        }
-    }
-
-    fclose(file);
-    return 1;
-}
 
 void print_inventory(const ItemType inv[], int size, char item_names[][MAX_NAME_LEN]) {
         for (int i = 0; i < size; i++) {
@@ -125,6 +74,39 @@ int find_item_id_by_name(char names[][MAX_NAME_LEN], const char* word) {
     }
 
     return -1;
+}
+
+int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        strncpy(names[i], DEFAULT_ITEM_NAMES[i], MAX_NAME_LEN - 1);
+        names[i][MAX_NAME_LEN - 1] = '\0';
+    }
+
+    FILE* file = fopen("items.txt", "r");
+    if (file == NULL) {
+        file = fopen("src/items.txt", "r");
+    }
+    if (file == NULL) {
+        printf("Предупреждение: файл items.txt не найден! Загружен каталог по умолчанию.\n");
+        return 0;
+    }
+
+    char line[MAX_LINE_LEN];
+    while (fgets(line, sizeof(line), file) != NULL) {
+        int id;
+        char name[MAX_NAME_LEN];
+        char format[32];
+        sprintf(format, "%%d %%%d[^\n]", MAX_NAME_LEN - 1); // Получится "%d %31[^\n]"
+
+        if (sscanf(line, format, &id, name) == 2) {
+            if (id >= 0 && id < MAX_ITEMS && name[0] != '\0') {
+                strncpy(names[id], name, MAX_NAME_LEN - 1);
+                names[id][MAX_NAME_LEN - 1] = '\0';
+            }
+        }
+    }
+    fclose(file);
+    return 1;
 }
 
 void write_diary_entry(FILE* out_screen, FILE* out_file,
