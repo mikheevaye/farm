@@ -312,7 +312,7 @@ void make_floor(char** map, int height, int width, int is_vertical,
         for (int x = 0; x < width; x++)
             map[y][x] = SYM_FLOOR;
 
-    // Внешние стеныю
+    // Внешние стены
     for (int y = 0; y < height; y++) {
         map[y][0] = SYM_WALL;
         map[y][width - 1] = SYM_WALL;
@@ -331,15 +331,9 @@ void make_floor(char** map, int height, int width, int is_vertical,
                 else if (r == 1) map[y][x] = SYM_ROCK;
             }
 
-        // Стена посередине.
+        // Стена посередине
         for (int y = 0; y < height; y++)
             map[y][mid] = SYM_WALL;
-
-
-        *player_start_x = 1;
-        *player_start_y = 1;
-        map[height - 2][1] = SYM_SWITCH;
-        map[height - 2][width - 2] = SYM_LADDER_UP;
     }
     else {
         int mid = height / 2;
@@ -354,14 +348,34 @@ void make_floor(char** map, int height, int width, int is_vertical,
         for (int x = 0; x < width; x++)
             map[mid][x] = SYM_WALL;
 
-        *player_start_x = 1;
-        *player_start_y = 1;
-        map[1][width - 2] = SYM_SWITCH;
-        map[height - 2][width - 2] = SYM_LADDER_UP;
     }
 
+    int x, y;
+
+    // Игрок + D под ним
+    do {
+        x = 1 + rand() % (width - 2);
+        y = 1 + rand() % (height - 2);
+    } while (map[y][x] != SYM_FLOOR);
+    *player_start_x = x;
+    *player_start_y = y;
     *under = SYM_LADDER_DOWN;
-    map[*player_start_y][*player_start_x] = SYM_PLAYER;
+    map[y][x] = SYM_PLAYER;
+
+    // Переключатель
+    do {
+        x = 1 + rand() % (width - 2);
+        y = 1 + rand() % (height - 2);
+    } while (map[y][x] != SYM_FLOOR);
+    map[y][x] = SYM_SWITCH;
+
+    // Лестница вверх
+    do {
+        x = 1 + rand() % (width - 2);
+        y = 1 + rand() % (height - 2);
+    } while (map[y][x] != SYM_FLOOR);
+    map[y][x] = SYM_LADDER_UP;
+
 }
 // [10] - Отправиться в приключение
 void adventure_action(void) {
