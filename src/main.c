@@ -312,7 +312,7 @@ void make_floor(char** map, int height, int width, int is_vertical,
         for (int x = 0; x < width; x++)
             map[y][x] = SYM_FLOOR;
 
-    // Внешние стены
+    // Внешние стеныю
     for (int y = 0; y < height; y++) {
         map[y][0] = SYM_WALL;
         map[y][width - 1] = SYM_WALL;
