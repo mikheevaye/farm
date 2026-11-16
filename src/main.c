@@ -331,7 +331,7 @@ void make_floor(char** map, int height, int width, int is_vertical,
                 else if (r == 1) map[y][x] = SYM_ROCK;
             }
 
-        // Стена посередине
+        // Стена посередине.
         for (int y = 0; y < height; y++)
             map[y][mid] = SYM_WALL;
 
