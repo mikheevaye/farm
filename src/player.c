@@ -1,4 +1,5 @@
 #include "player.h"
+#include "utils.h"
 
 Player* player_create(void) {
     Player* p = (Player*)malloc(sizeof(Player));

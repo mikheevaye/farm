@@ -7,6 +7,13 @@
 #define MAX_ITEMS     10
 #define HOURS_IN_DAY  24
 
+/* Состояние игры */
+typedef struct {
+    Player* player;
+    int     current_day;
+    int     current_hour;
+    char    item_names[MAX_ITEMS][MAX_NAME_LEN];
+} GameState;
 
 int  fool_check(int scanf_result);
 
@@ -28,5 +35,9 @@ int  process_quests_to_streams(FILE* out_screen, FILE* out_file, const char* fil
                                const ItemType inv[], int inv_size, char item_names[MAX_ITEMS][MAX_NAME_LEN]);
 
 void process_quests_action(int day, const ItemType inv[], char item_names[MAX_ITEMS][MAX_NAME_LEN]);
+
+void print_time(int day, int hour);
+int  advance_time(int* day, int* hour, int hours);
+void sleep_until_morning(int* day, int* hour, Player* player);
 
 #endif // UTILS_H
