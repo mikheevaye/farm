@@ -7,7 +7,6 @@ Map* map_create(int height, int width) {
         printf("Ошибка выделения памяти под Map!\n");
         return NULL;
     }
-
     m->height = height;
     m->width = width;
     m->floor = 1;
@@ -45,6 +44,9 @@ void map_free(Map* m) {
 }
 
 void map_generate_floor(Map* m, int* player_x, int* player_y) {
+
+    int mid = m->is_vertical ? m->width / 2 : m->height / 2;
+
     for (int y = 0; y < m->height; y++)
         for (int x = 0; x < m->width; x++)
             m->cells[y][x] = SYM_FLOOR;
@@ -85,7 +87,7 @@ void map_generate_floor(Map* m, int* player_x, int* player_y) {
     do {
         x = 1 + rand() % (m->width - 2);
         y = 1 + rand() % (m->height - 2);
-    } while (m->cells[y][x] != SYM_FLOOR);
+    } while (m->cells[y][x] != SYM_FLOOR || (m->is_vertical ? (x >= mid) : (y >= mid)));
     *player_x = x;
     *player_y = y;
     m->under = SYM_LADDER_DOWN;
@@ -94,7 +96,7 @@ void map_generate_floor(Map* m, int* player_x, int* player_y) {
     do {
         x = 1 + rand() % (m->width - 2);
         y = 1 + rand() % (m->height - 2);
-    } while (m->cells[y][x] != SYM_FLOOR);
+    } while (m->cells[y][x] != SYM_FLOOR || (m->is_vertical ? (x >= mid) : (y >= mid)));
     m->cells[y][x] = SYM_SWITCH;
 
     do {
@@ -104,59 +106,19 @@ void map_generate_floor(Map* m, int* player_x, int* player_y) {
     m->cells[y][x] = SYM_LADDER_UP;
 }
 
-void map_print(const Map* m, const Player* p) {
-    if (m == NULL) return;
-
-    printf("\n=== Башня: этаж %d ===\n", m->floor);
-    int mid = m->is_vertical ? m->width / 2 : m->height / 2;
-
-    for (int y = 0; y < m->height; y++) {
-        for (int x = 0; x < m->width; x++) {
-            char c;
-            int hidden = m->wall_active &&
-                ((m->is_vertical && x > mid) ||
-                    (!m->is_vertical && y > mid));
-
-            if (hidden) {
-                int mid_x = m->is_vertical ? (m->width - 1 - x) : x;
-                int mid_y = m->is_vertical ? y : (m->height - 1 - y);
-                c = m->cells[mid_y][mid_x];
-            }
-            else {
-                c = m->cells[y][x];
-            }
-            printf("%c ", c);
-        }
-        printf("\n");
-    }
-
-    if (p) {
-        printf("HP: %d/%d | Выносливость: %d/%d | Золото: %d | Этаж: %d\n",
-            p->hp, p->max_hp, p->stamina, p->max_stamina,
-            p->gold, m->floor);
-    }
-    printf("W/A/S/D - ходить, Q - сбежать (только на %c)\n", SYM_LADDER_DOWN
-
-
-    );
-}
-
 static int step_stamina_cost(const Player* p) {
-    if (p && p->active_relic.effect == RELIC_GREED)
-        return 2;
+    if (p && p->active_relic.effect == RELIC_GREED) return 2;
     return 1;
 }
 
 static int floor_stamina_cost(const Player* p) {
-    if (p && p->active_relic.effect == RELIC_SPEED)
-        return 1;
+    if (p && p->active_relic.effect == RELIC_SPEED) return 1;
     return 5;
 }
 
 static int floor_gold_reward(const Player* p, int floor) {
     int base = BASE_GOLD_MULTIPLIER * floor;
-    if (p && p->active_relic.effect == RELIC_GREED)
-        return base * 2;
+    if (p && p->active_relic.effect == RELIC_GREED) return base * 2;
     return base;
 }
 
@@ -178,6 +140,10 @@ static void handle_relic_find(Player* p) {
     }
 
     if (choice == 1) {
+        if (p->active_relic.effect != RELIC_NONE) {
+            printf("Старый талисман «%s» пропал.\n", p->active_relic.name);
+            player_clear_relic(p);
+        }
         player_set_relic(p, found);
     }
     else if (choice == 2) {
@@ -254,31 +220,37 @@ void adventure_run(GameState* gs) {
             continue;
         }
 
-        if (move == 'q' || move == 'Q') {
+        Direction dir = DIR_NONE;
+        if (move == 'w' || move == 'W') dir = DIR_UP;
+        else if (move == 's' || move == 'S') dir = DIR_DOWN;
+        else if (move == 'a' || move == 'A') dir = DIR_LEFT;
+        else if (move == 'd' || move == 'D') dir = DIR_RIGHT;
+        else if (move == 'q' || move == 'Q') dir = DIR_QUIT;
+
+        if (dir == DIR_QUIT) {
             if (m->under == SYM_LADDER_DOWN) {
                 printf("\nВы успешно сбежали домой! Всё заработанное золото при вас.\n");
                 break;
             }
             else {
-                printf("\nВыход работает только если вы стоите на лестнице вниз (%c)!\n",
+                printf("\nВыход работает только на лестнице вниз (%c)!\n",
                     SYM_LADDER_DOWN);
                 continue;
             }
         }
+        if (dir == DIR_NONE) {
+            printf("Используйте W, A, S, D или Q!\n");
+            continue;
+        }
 
         int new_x = p->x;
         int new_y = p->y;
-
-        if (move == 'w' || move == 'W') new_y--;
-        else if (move == 's'
-
-
-            || move == 'S') new_y++;
-        else if (move == 'a' || move == 'A') new_x--;
-        else if (move == 'd' || move == 'D') new_x++;
-        else {
-            printf("Используйте W, A, S, D или Q!\n");
-            continue;
+        switch (dir) {
+        case DIR_UP:    new_y--; break;
+        case DIR_DOWN:  new_y++; break;
+        case DIR_LEFT:  new_x--; break;
+        case DIR_RIGHT: new_x++; break;
+        default: break;
         }
 
         if (new_x < 0 || new_x >= m->width || new_y < 0 || new_y >= m->height) {
@@ -338,15 +310,16 @@ void adventure_run(GameState* gs) {
 
             int reward = floor_gold_reward(p, m->floor);
             p->gold += reward;
-            printf("Вы получили %d золота за исследование этажа %d!\n",
-                reward, m->floor);
+            printf("Вы получили %d золота за этаж %d!\n", reward, m->floor);
 
             handle_relic_find(p);
 
             m->floor++;
 
+            /* Освобождаем старые клетки и выделяем новые */
             for (int i = 0; i < m->height; i++) free(m->cells[i]);
             free(m->cells);
+            m->cells = NULL;
 
             m->height = 7 + (rand() % 6) * 2;
             m->width = 7 + (rand() % 6) * 2;
@@ -354,8 +327,25 @@ void adventure_run(GameState* gs) {
             m->wall_active = 1;
 
             m->cells = (char**)malloc(m->height * sizeof(char*));
-            for (int i = 0; i < m->height; i++)
+            if (m->cells == NULL) {
+                printf("Ошибка памяти!\n");
+                emergency = 1;
+                break;
+            }
+            int rows_ok = 1;
+            for (int i = 0; i < m->height; i++) {
                 m->cells[i] = (char*)malloc(m->width * sizeof(char));
+                if (m->cells[i] == NULL) {
+                    for (int j = 0; j < i; j++) free(m->cells[j]);
+                    free(m->cells);
+                    m->cells = NULL;
+                    printf("Ошибка памяти!\n");
+                    rows_ok = 0;
+                    emergency = 1;
+                    break;
+                }
+            }
+            if (!rows_ok) break;
 
             map_generate_floor(m, &p->x, &p->y);
         }
@@ -374,8 +364,7 @@ void adventure_run(GameState* gs) {
     if (emergency) {
         int lost = p->gold / 2;
         p->gold -= lost;
-        printf("Спасательная служба доставила вас домой, забрав %d золота за услуги.\n",
-            lost);
+        printf("Спасательная служба доставила вас домой, забрав %d золота.\n", lost);
         printf("Осталось золота: %d\n", p->gold);
     }
 

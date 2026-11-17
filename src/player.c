@@ -28,9 +28,15 @@ Player* player_create(void) {
     for (int i = 0; i < INVENTORY_SIZE; i++) {
         p->inventory[i] = ITEM_EMPTY;
     }
-    p->inventory[0] = ITEM_WOOD;
-    p->inventory[1] = ITEM_STONE;
-    p->inventory[2] = ITEM_SEEDS;
+    p->inventory[1] = ITEM_WOOD;
+    p->inventory[2] = ITEM_STONE;
+    p->inventory[3] = ITEM_SEEDS;
+    p->inventory[4] = ITEM_IRON;
+    p->inventory[5] = ITEM_WATER;
+    p->inventory[6] = ITEM_TORCH;
+    p->inventory[7] = ITEM_GOLD;
+    p->inventory[8] = ITEM_ROPE;
+    p->inventory[9] = ITEM_SCYTHE;
 
     p->active_relic.effect = RELIC_NONE;
     strcpy(p->active_relic.name, "Нет");
@@ -128,10 +134,7 @@ void player_clear_item_id(Player* p, int id,
         printf("Предметов с ID %d в инвентаре не найдено.\n", id);
     }
     else {
-        printf("О
-
-
-            чищено слотов : % d(предмет ID % d->« % s»).\n",
+        printf("Очищено слотов: %d (предмет ID %d -> «%s»).\n",
             count, id, item_names[id]);
     }
 }
@@ -154,7 +157,8 @@ void player_find_item_by_name(Player* p, const char* word,
             item_names[id], id);
     }
     else {
-        printf("Предмет «%s» (ID %d) найден в слотах: ", item_names[id], id);
+        printf("Предмет «%s» (ID %d) найден в слотах: ",
+            item_names[id], id);
         for (int i = 0; i < count; i++) {
             printf("%d%s", slots[i], (i < count - 1) ? ", " : "\n");
         }

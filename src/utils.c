@@ -22,11 +22,9 @@ int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
     }
 
     FILE* file = fopen("items.txt", "r");
+    if (file == NULL) file = fopen("data/items.txt", "r");
     if (file == NULL) {
-        file = fopen("data/items.txt", "r");
-    }
-    if (file == NULL) {
-        printf("Предупреждение: файл items.txt не найден! Загружен каталог по умолчанию.\n");
+        printf("Предупреждение: файл items.txt не найден! Каталог по умолчанию.\n");
         return 0;
     }
 
@@ -36,7 +34,6 @@ int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
         char name[MAX_NAME_LEN];
         char format[32];
         sprintf(format, "%%d %%%d[^\n]", MAX_NAME_LEN - 1);
-
         if (sscanf(line, format, &id, name) == 2) {
             if (id >= 0 && id < MAX_ITEMS && name[0] != '\0') {
                 strncpy(names[id], name, MAX_NAME_LEN - 1);
@@ -50,9 +47,7 @@ int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
 
 int find_item_id_by_name(char names[][MAX_NAME_LEN], const char* word) {
     for (int i = 0; i < MAX_ITEMS; i++) {
-        if (strcmp(names[i], word) == 0) {
-            return i;
-        }
+        if (strcmp(names[i], word) == 0) return i;
     }
     return -1;
 }
@@ -61,34 +56,27 @@ int find_inventory_slots(const ItemType inv[], int size, int id,
     int slots[], int max_slots) {
     int count = 0;
     for (int i = 0; i < size && count < max_slots; i++) {
-        if ((int)inv[i] == id) {
-            slots[count++] = i;
-        }
+        if ((int)inv[i] == id) slots[count++] = i;
     }
     return count;
 }
 
 void write_diary_entry(FILE* out_screen, FILE* out_file,
-    const char* player_name,
-    int day, int hour,
+    const char* player_name, int day, int hour,
     const ItemType inv[], int size,
-    char item_names[MAX_ITEMS][MAX_NAME_LEN])
-{
+    char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
     FILE* streams[2] = { out_screen, out_file };
-
     for (int s = 0; s < 2; s++) {
         FILE* out = streams[s];
         if (out == NULL) continue;
-
         fprintf(out, "===== Дневник фермера =====\n");
         fprintf(out, "Имя: %s\n", player_name);
         fprintf(out, "День: %d, Время: %02d:00\n", day, hour);
         fprintf(out, "Инвентарь:\n");
-
         for (int i = 0; i < size; i++) {
             int id = (int)inv[i];
             const char* name = (id >= 0 && id < MAX_ITEMS)
-                ? item_names[id] : "Неизвестный предмет";
+                ? item_names[id] : "Неизвестный";
             fprintf(out, "  Слот %d: [%d] - %s\n", i, id, name);
         }
         fprintf(out, "==========================\n\n");
@@ -101,7 +89,6 @@ void save_diary_action(const Player* player, int day, int hour,
         printf("Сначала создайте персонажа!\n");
         return;
     }
-
     FILE* diary = fopen("diary.txt", "a");
     if (diary == NULL) {
         printf("Ошибка: не удалось открыть diary.txt\n");
@@ -118,31 +105,20 @@ int process_quests_to_streams(FILE* out_screen, FILE* out_file,
     const ItemType inv[], int inv_size,
     char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
     FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        file = fopen("data/input.txt", "r");
-    }
-    if (file == NULL) {
-        return -1;
-    }
+    if (file == NULL) file = fopen("data/input.txt", "r");
+    if (file == NULL) return -1;
 
-    fprintf(out_screen, "=== Доска объявлений (доступно на день %d) ===\n", current_day);
-    if (out_file)
-
-
-    {
-        fprintf(out_file, "=== Доска объявлений (доступно на день %d) ===\n", current_day);
-    }
+    fprintf(out_screen, "=== Доска объявлений (день %d) ===\n", current_day);
+    if (out_file) fprintf(out_file, "=== Доска объявлений (день %d) ===\n", current_day);
 
     char line[MAX_LINE_LEN];
-    int any_quest = 0;
+    int any = 0;
 
     while (fgets(line, sizeof(line), file) != NULL) {
         int day, reward;
         char customer[MAX_NAME_LEN], item[MAX_NAME_LEN];
-
         line[strcspn(line, "\r\n")] = '\0';
         if (line[0] == '\0') continue;
-
         int parsed = sscanf(line, "%d | %31[^|] | %31[^|] | %d",
             &day, customer, item, &reward);
         if (parsed != 4) continue;
@@ -152,27 +128,23 @@ int process_quests_to_streams(FILE* out_screen, FILE* out_file,
         int ready = 0;
         if (item_id >= 0) {
             int slots[INVENTORY_SIZE];
-            ready = find_inventory_slots(inv, inv_size, item_id, slots, INVENTORY_SIZE) > 0;
+            ready = find_inventory_slots(inv, inv_size, item_id,
+                slots, INVENTORY_SIZE) > 0;
         }
-
         const char* status = ready ? "[ГОТОВО К СДАЧЕ]" : "[В ПРОЦЕССЕ]";
-
-        fprintf(out_screen,
-            "День %d | %s | %s | Награда: %d | %s\n",
+        fprintf(out_screen, "День %d | %s | %s | Награда: %d | %s\n",
             day, customer, item, reward, status);
         if (out_file) {
-            fprintf(out_file,
-                "День %d | %s | %s | Награда: %d | %s\n",
+            fprintf(out_file, "День %d | %s | %s | Награда: %d | %s\n",
                 day, customer, item, reward, status);
         }
-        any_quest = 1;
+        any = 1;
     }
 
-    if (!any_quest) {
+    if (!any) {
         fprintf(out_screen, "Нет доступных заказов.\n");
         if (out_file) fprintf(out_file, "Нет доступных заказов.\n");
     }
-
     fclose(file);
     return 0;
 }
@@ -187,13 +159,8 @@ void process_quests_action(int day, const ItemType inv[],
     int res = process_quests_to_streams(stdout, out_file, "input.txt",
         day, inv, INVENTORY_SIZE, item_names);
     fclose(out_file);
-
-    if (res != 0) {
-        printf("Ошибка: файл input.txt не найден!\n");
-    }
-    else {
-        printf("Заказы записаны в output.txt!\n");
-    }
+    if (res != 0) printf("Ошибка: файл input.txt не найден!\n");
+    else          printf("Заказы записаны в output.txt!\n");
 }
 
 void print_time(int day, int hour) {
@@ -205,12 +172,10 @@ int advance_time(int* day, int* hour, int hours) {
         printf("Можно промотать только положительное число часов.\n");
         return 0;
     }
-
     if (*hour == NIGHT_HOUR) {
         printf("Уже 02:00. Фермер должен спать! Используйте «Отдых».\n");
         return 0;
     }
-
     int advanced = 0;
     for (int i = 0; i < hours; i++) {
         (*hour)++;
@@ -220,7 +185,7 @@ int advance_time(int* day, int* hour, int hours) {
             (*day)++;
         }
         if (*hour == NIGHT_HOUR) {
-            printf("Достигнуто 02:00 ночи. Дальше проматывать нельзя — нужно спать.\n");
+            printf("Достигнуто 02:00 ночи. Дальше нельзя — нужно спать.\n");
             break;
         }
     }
@@ -230,11 +195,10 @@ int advance_time(int* day, int* hour, int hours) {
 void sleep_until_morning(int* day, int* hour, Player* player) {
     *day += 1;
     *hour = MORNING_HOUR;
-
     if (player) {
         player->hp = player->max_hp;
         player->stamina = player->max_stamina;
-        printf("Вы выспались. Здоровье и выносливость полностью восстановлены.\n");
+        printf("Вы выспались. Здоровье и выносливость восстановлены.\n");
     }
     printf("Наступило утро. День %d, %02d:00\n", *day, *hour);
 }
@@ -258,9 +222,9 @@ Relic get_random_relic(void) {
 
 const char* relic_effect_description(RelicEffect effect) {
     switch (effect) {
-    case RELIC_GREED:  return "x2 золото за этаж, но шаг стоит 2 стамины";
-    case RELIC_SPEED:  return "смена этажа стоит 1 стамину вместо 5";
-    case RELIC_TROLL:  return "+1 HP за каждый шаг";
-    default:           return "нет эффекта";
+    case RELIC_GREED: return "x2 золото за этаж, но шаг стоит 2 стамины";
+    case RELIC_SPEED: return "смена этажа стоит 1 стамину вместо 5";
+    case RELIC_TROLL: return "+1 HP за каждый шаг";
+    default:          return "нет эффекта";
     }
 }

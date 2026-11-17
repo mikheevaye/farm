@@ -2,20 +2,10 @@
 #define UTILS_H
 
 #include "player.h"
-#include "map.h"
 
 #define MAX_LINE_LEN  256
 #define MAX_ITEMS     10
 #define HOURS_IN_DAY  24
-
-/* Состояние игры */
-typedef struct {
-    Player* player;
-    Map* map;
-    int     current_day;
-    int     current_hour;
-    char    item_names[MAX_ITEMS][MAX_NAME_LEN];
-} GameState;
 
 int  fool_check(int scanf_result);
 

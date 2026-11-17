@@ -10,17 +10,17 @@
 #include <windows.h>
 #endif
 
-#define MAX_LINE_LEN        256
-#define MAX_NAME_LEN        32
-#define MAX_PLAYER_NAME     32
-#define HOURS_IN_DAY        24
-#define INVENTORY_SIZE      10
-#define MAX_ITEMS           10
+#define MAX_LINE_LEN         256
+#define MAX_NAME_LEN         32
+#define MAX_PLAYER_NAME      32
+#define HOURS_IN_DAY         24
+#define INVENTORY_SIZE       10
+#define MAX_ITEMS            10
 #define BASE_GOLD_MULTIPLIER 15
-#define NIGHT_HOUR          2
-#define MORNING_HOUR        8
-#define RELIC_SELL_PRICE    25
-#define RELIC_FIND_CHANCE   20
+#define NIGHT_HOUR           2
+#define MORNING_HOUR         8
+#define RELIC_SELL_PRICE     25
+#define RELIC_FIND_CHANCE    20
 
 typedef enum {
     ITEM_EMPTY = 0,
@@ -46,9 +46,9 @@ typedef enum {
 
 typedef enum {
     RELIC_NONE = 0,
-    RELIC_GREED,      // Кольцо жадности
-    RELIC_SPEED,      // Сапоги-скороходы
-    RELIC_TROLL,      // Камень тролля
+    RELIC_GREED,   /* Кольцо жадности */
+    RELIC_SPEED,   /* Сапоги-скороходы */
+    RELIC_TROLL,   /* Камень тролля */
     RELIC_COUNT
 } RelicEffect;
 
@@ -69,7 +69,6 @@ typedef struct {
     Relic       active_relic;
 } Player;
 
-// Прототипы
 Player* player_create(void);
 void    player_free(Player* p);
 
