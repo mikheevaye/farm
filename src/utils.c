@@ -1,6 +1,5 @@
 #include "utils.h"
 
-
 int fool_check(int scanf_result) {
     int ch;
     while ((ch = getchar()) != '\n' && ch != EOF);
@@ -11,6 +10,11 @@ int fool_check(int scanf_result) {
     return 1;
 }
 
+static const char* DEFAULT_ITEM_NAMES[MAX_ITEMS] = {
+    "Пусто", "Дерево", "Камень", "Семена", "Железо",
+    "Вода", "Факел", "Золото", "Верёвка", "Коса"
+};
+
 int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
     for (int i = 0; i < MAX_ITEMS; i++) {
         strncpy(names[i], DEFAULT_ITEM_NAMES[i], MAX_NAME_LEN - 1);
@@ -19,7 +23,7 @@ int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
 
     FILE* file = fopen("items.txt", "r");
     if (file == NULL) {
-        file = fopen("src/items.txt", "r");
+        file = fopen("data/items.txt", "r");
     }
     if (file == NULL) {
         printf("Предупреждение: файл items.txt не найден! Загружен каталог по умолчанию.\n");
@@ -31,7 +35,7 @@ int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
         int id;
         char name[MAX_NAME_LEN];
         char format[32];
-        sprintf(format, "%%d %%%d[^\n]", MAX_NAME_LEN - 1); // Получится "%d %31[^\n]"
+        sprintf(format, "%%d %%%d[^\n]", MAX_NAME_LEN - 1);
 
         if (sscanf(line, format, &id, name) == 2) {
             if (id >= 0 && id < MAX_ITEMS && name[0] != '\0') {
@@ -118,11 +122,14 @@ int process_quests_to_streams(FILE* out_screen, FILE* out_file,
         file = fopen("data/input.txt", "r");
     }
     if (file == NULL) {
-        return -1; // input.txt не открылся
+        return -1;
     }
 
     fprintf(out_screen, "=== Доска объявлений (доступно на день %d) ===\n", current_day);
-    if (out_file) {
+    if (out_file)
+
+
+    {
         fprintf(out_file, "=== Доска объявлений (доступно на день %d) ===\n", current_day);
     }
 
@@ -139,11 +146,8 @@ int process_quests_to_streams(FILE* out_screen, FILE* out_file,
         int parsed = sscanf(line, "%d | %31[^|] | %31[^|] | %d",
             &day, customer, item, &reward);
         if (parsed != 4) continue;
-
-        // только доступные квесты (День_появления <= current_day)
         if (day > current_day) continue;
 
-        // проверка, есть ли вообще требуемый предмет в inventory 
         int item_id = find_item_id_by_name(item_names, item);
         int ready = 0;
         if (item_id >= 0) {
@@ -153,7 +157,6 @@ int process_quests_to_streams(FILE* out_screen, FILE* out_file,
 
         const char* status = ready ? "[ГОТОВО К СДАЧЕ]" : "[В ПРОЦЕССЕ]";
 
-        // ── вывод на экран И в файл ──
         fprintf(out_screen,
             "День %d | %s | %s | Награда: %d | %s\n",
             day, customer, item, reward, status);
@@ -236,50 +239,7 @@ void sleep_until_morning(int* day, int* hour, Player* player) {
     printf("Наступило утро. День %d, %02d:00\n", *day, *hour);
 }
 
-void print_time(int day, int hour) {
-    printf("Текущее время: День %d, %02d:00\n", day, hour);
-}
-
-int advance_time(int* day, int* hour, int hours) {
-    if (hours < 1) {
-        printf("Можно промотать только положительное число часов.\n");
-        return 0;
-    }
-
-    if (*hour == NIGHT_HOUR) {
-        printf("Уже 02:00. Фермер должен спать! Используйте «Отдых».\n");
-        return 0;
-    }
-
-    int advanced = 0;
-    for (int i = 0; i < hours; i++) {
-        (*hour)++;
-        advanced++;
-        if (*hour >= HOURS_IN_DAY) {
-            *hour = 0;
-            (*day)++;
-        }
-        if (*hour == NIGHT_HOUR) {
-            printf("Достигнуто 02:00 ночи. Дальше проматывать нельзя — нужно спать.\n");
-            break;
-        }
-    }
-    return advanced;
-}
-
-void sleep_until_morning(int* day, int* hour, Player* player) {
-    *day += 1;
-    *hour = MORNING_HOUR;
-
-    if (player) {
-        player->hp = player->max_hp;
-        player->stamina = player->max_stamina;
-        printf("Вы выспались. Здоровье и выносливость полностью восстановлены.\n");
-    }
-    printf("Наступило утро. День %d, %02d:00\n", *day, *hour);
-}
-
-// Реликвии
+/* ===== Реликвии ===== */
 static const char* RELIC_NAMES[RELIC_COUNT] = {
     "Нет",
     "Кольцо жадности",

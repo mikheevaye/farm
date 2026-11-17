@@ -40,11 +40,6 @@ Player* player_create(void) {
     return p;
 }
 
-static const char* DEFAULT_ITEM_NAMES[MAX_ITEMS] = {
-    "Пусто", "Дерево", "Камень", "Семена", "Железо",
-    "Вода", "Факел", "Золото", "Верёвка", "Коса"
-};
-
 void player_free(Player* p) {
     if (p == NULL) return;
     printf("Память структуры по адресу %p освобождена\n", (void*)p);
@@ -78,7 +73,6 @@ void player_print_card(const Player* p, int day, int hour,
     player_print_inventory(p, item_names);
     printf("========================================\n");
 }
-
 
 void player_print_inventory(const Player* p,
     char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
@@ -134,7 +128,10 @@ void player_clear_item_id(Player* p, int id,
         printf("Предметов с ID %d в инвентаре не найдено.\n", id);
     }
     else {
-        printf("Очищено слотов: %d (предмет ID %d -> «%s»).\n",
+        printf("О
+
+
+            чищено слотов : % d(предмет ID % d->« % s»).\n",
             count, id, item_names[id]);
     }
 }

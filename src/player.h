@@ -1,9 +1,19 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #define MAX_LINE_LEN        256
 #define MAX_NAME_LEN        32
 #define MAX_PLAYER_NAME     32
+#define HOURS_IN_DAY        24
 #define INVENTORY_SIZE      10
 #define MAX_ITEMS           10
 #define BASE_GOLD_MULTIPLIER 15
@@ -12,7 +22,6 @@
 #define RELIC_SELL_PRICE    25
 #define RELIC_FIND_CHANCE   20
 
-/* ===== Перечисления ===== */
 typedef enum {
     ITEM_EMPTY = 0,
     ITEM_WOOD,
@@ -43,7 +52,6 @@ typedef enum {
     RELIC_COUNT
 } RelicEffect;
 
-// Структуры
 typedef struct {
     RelicEffect effect;
     char        name[MAX_NAME_LEN];
@@ -82,4 +90,4 @@ void    player_set_relic(Player* p, Relic relic);
 void    player_clear_relic(Player* p);
 void    player_print_relic(const Player* p);
 
-#endif // PLAYER_H
+#endif /* PLAYER_H */
