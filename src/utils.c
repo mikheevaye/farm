@@ -235,3 +235,72 @@ void sleep_until_morning(int* day, int* hour, Player* player) {
     }
     printf("Наступило утро. День %d, %02d:00\n", *day, *hour);
 }
+
+void print_time(int day, int hour) {
+    printf("Текущее время: День %d, %02d:00\n", day, hour);
+}
+
+int advance_time(int* day, int* hour, int hours) {
+    if (hours < 1) {
+        printf("Можно промотать только положительное число часов.\n");
+        return 0;
+    }
+
+    if (*hour == NIGHT_HOUR) {
+        printf("Уже 02:00. Фермер должен спать! Используйте «Отдых».\n");
+        return 0;
+    }
+
+    int advanced = 0;
+    for (int i = 0; i < hours; i++) {
+        (*hour)++;
+        advanced++;
+        if (*hour >= HOURS_IN_DAY) {
+            *hour = 0;
+            (*day)++;
+        }
+        if (*hour == NIGHT_HOUR) {
+            printf("Достигнуто 02:00 ночи. Дальше проматывать нельзя — нужно спать.\n");
+            break;
+        }
+    }
+    return advanced;
+}
+
+void sleep_until_morning(int* day, int* hour, Player* player) {
+    *day += 1;
+    *hour = MORNING_HOUR;
+
+    if (player) {
+        player->hp = player->max_hp;
+        player->stamina = player->max_stamina;
+        printf("Вы выспались. Здоровье и выносливость полностью восстановлены.\n");
+    }
+    printf("Наступило утро. День %d, %02d:00\n", *day, *hour);
+}
+
+// Реликвии
+static const char* RELIC_NAMES[RELIC_COUNT] = {
+    "Нет",
+    "Кольцо жадности",
+    "Сапоги-скороходы",
+    "Камень тролля"
+};
+
+Relic get_random_relic(void) {
+    Relic r;
+    int idx = 1 + rand() % (RELIC_COUNT - 1);
+    r.effect = (RelicEffect)idx;
+    strncpy(r.name, RELIC_NAMES[idx], MAX_NAME_LEN - 1);
+    r.name[MAX_NAME_LEN - 1] = '\0';
+    return r;
+}
+
+const char* relic_effect_description(RelicEffect effect) {
+    switch (effect) {
+    case RELIC_GREED:  return "x2 золото за этаж, но шаг стоит 2 стамины";
+    case RELIC_SPEED:  return "смена этажа стоит 1 стамину вместо 5";
+    case RELIC_TROLL:  return "+1 HP за каждый шаг";
+    default:           return "нет эффекта";
+    }
+}

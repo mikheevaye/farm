@@ -40,4 +40,12 @@ void print_time(int day, int hour);
 int  advance_time(int* day, int* hour, int hours);
 void sleep_until_morning(int* day, int* hour, Player* player);
 
+void print_time(int day, int hour);
+int  advance_time(int* day, int* hour, int hours);
+void sleep_until_morning(int* day, int* hour, Player* player);
+
+// Реликвии
+Relic get_random_relic(void);
+const char* relic_effect_description(RelicEffect effect);
+
 #endif // UTILS_H
