@@ -1,0 +1,194 @@
+#include "utils.h"
+
+
+int fool_check(int scanf_result) {
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF);
+    if (scanf_result != 1) {
+        printf("Ошибка ввода. Введите целое число.\n");
+        return 0;
+    }
+    return 1;
+}
+
+int items_catalog(char names[MAX_ITEMS][MAX_NAME_LEN]) {
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        strncpy(names[i], DEFAULT_ITEM_NAMES[i], MAX_NAME_LEN - 1);
+        names[i][MAX_NAME_LEN - 1] = '\0';
+    }
+
+    FILE* file = fopen("items.txt", "r");
+    if (file == NULL) {
+        file = fopen("src/items.txt", "r");
+    }
+    if (file == NULL) {
+        printf("Предупреждение: файл items.txt не найден! Загружен каталог по умолчанию.\n");
+        return 0;
+    }
+
+    char line[MAX_LINE_LEN];
+    while (fgets(line, sizeof(line), file) != NULL) {
+        int id;
+        char name[MAX_NAME_LEN];
+        char format[32];
+        sprintf(format, "%%d %%%d[^\n]", MAX_NAME_LEN - 1); // Получится "%d %31[^\n]"
+
+        if (sscanf(line, format, &id, name) == 2) {
+            if (id >= 0 && id < MAX_ITEMS && name[0] != '\0') {
+                strncpy(names[id], name, MAX_NAME_LEN - 1);
+                names[id][MAX_NAME_LEN - 1] = '\0';
+            }
+        }
+    }
+    fclose(file);
+    return 1;
+}
+
+int find_item_id_by_name(char names[][MAX_NAME_LEN], const char* word) {
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        if (strcmp(names[i], word) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int find_inventory_slots(const ItemType inv[], int size, int id,
+    int slots[], int max_slots) {
+    int count = 0;
+    for (int i = 0; i < size && count < max_slots; i++) {
+        if ((int)inv[i] == id) {
+            slots[count++] = i;
+        }
+    }
+    return count;
+}
+
+void write_diary_entry(FILE* out_screen, FILE* out_file,
+    const char* player_name,
+    int day, int hour,
+    const ItemType inv[], int size,
+    char item_names[MAX_ITEMS][MAX_NAME_LEN])
+{
+    FILE* streams[2] = { out_screen, out_file };
+
+    for (int s = 0; s < 2; s++) {
+        FILE* out = streams[s];
+        if (out == NULL) continue;
+
+        fprintf(out, "===== Дневник фермера =====\n");
+        fprintf(out, "Имя: %s\n", player_name);
+        fprintf(out, "День: %d, Время: %02d:00\n", day, hour);
+        fprintf(out, "Инвентарь:\n");
+
+        for (int i = 0; i < size; i++) {
+            int id = (int)inv[i];
+            const char* name = (id >= 0 && id < MAX_ITEMS)
+                ? item_names[id] : "Неизвестный предмет";
+            fprintf(out, "  Слот %d: [%d] - %s\n", i, id, name);
+        }
+        fprintf(out, "==========================\n\n");
+    }
+}
+
+void save_diary_action(const Player* player, int day, int hour,
+    char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
+    if (player == NULL) {
+        printf("Сначала создайте персонажа!\n");
+        return;
+    }
+
+    FILE* diary = fopen("diary.txt", "a");
+    if (diary == NULL) {
+        printf("Ошибка: не удалось открыть diary.txt\n");
+        return;
+    }
+    write_diary_entry(stdout, diary, player->name, day, hour,
+        player->inventory, INVENTORY_SIZE, item_names);
+    fclose(diary);
+    printf("Запись сохранена в diary.txt!\n");
+}
+
+int process_quests_to_streams(FILE* out_screen, FILE* out_file,
+    const char* filename, int current_day,
+    const ItemType inv[], int inv_size,
+    char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        file = fopen("data/input.txt", "r");
+    }
+    if (file == NULL) {
+        return -1; // input.txt не открылся
+    }
+
+    fprintf(out_screen, "=== Доска объявлений (доступно на день %d) ===\n", current_day);
+    if (out_file) {
+        fprintf(out_file, "=== Доска объявлений (доступно на день %d) ===\n", current_day);
+    }
+
+    char line[MAX_LINE_LEN];
+    int any_quest = 0;
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        int day, reward;
+        char customer[MAX_NAME_LEN], item[MAX_NAME_LEN];
+
+        line[strcspn(line, "\r\n")] = '\0';
+        if (line[0] == '\0') continue;
+
+        int parsed = sscanf(line, "%d | %31[^|] | %31[^|] | %d",
+            &day, customer, item, &reward);
+        if (parsed != 4) continue;
+
+        // только доступные квесты (День_появления <= current_day)
+        if (day > current_day) continue;
+
+        // проверка, есть ли вообще требуемый предмет в inventory 
+        int item_id = find_item_id_by_name(item_names, item);
+        int ready = 0;
+        if (item_id >= 0) {
+            int slots[INVENTORY_SIZE];
+            ready = find_inventory_slots(inv, inv_size, item_id, slots, INVENTORY_SIZE) > 0;
+        }
+
+        const char* status = ready ? "[ГОТОВО К СДАЧЕ]" : "[В ПРОЦЕССЕ]";
+
+        // ── вывод на экран И в файл ──
+        fprintf(out_screen,
+            "День %d | %s | %s | Награда: %d | %s\n",
+            day, customer, item, reward, status);
+        if (out_file) {
+            fprintf(out_file,
+                "День %d | %s | %s | Награда: %d | %s\n",
+                day, customer, item, reward, status);
+        }
+        any_quest = 1;
+    }
+
+    if (!any_quest) {
+        fprintf(out_screen, "Нет доступных заказов.\n");
+        if (out_file) fprintf(out_file, "Нет доступных заказов.\n");
+    }
+
+    fclose(file);
+    return 0;
+}
+
+void process_quests_action(int day, const ItemType inv[],
+    char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
+    FILE* out_file = fopen("output.txt", "w");
+    if (out_file == NULL) {
+        printf("Ошибка: не удалось создать output.txt\n");
+        return;
+    }
+    int res = process_quests_to_streams(stdout, out_file, "input.txt",
+        day, inv, INVENTORY_SIZE, item_names);
+    fclose(out_file);
+
+    if (res != 0) {
+        printf("Ошибка: файл input.txt не найден!\n");
+    }
+    else {
+        printf("Заказы записаны в output.txt!\n");
+    }
+}
